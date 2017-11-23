@@ -21,7 +21,7 @@ gx <- read.csv("sample.csv", sep = "\t", skip=2) # skip headers
 
 Number of samples:
 ```{r}
-ncol(df) - 2 # subtract `name` and `description` fields
+ncol(gx) - 2 # subtract `name` and `description` fields
 ```
 
 Structure of RNA Seq data (sample data):
@@ -122,5 +122,4 @@ gx[, 3:ncol(gx)] <- log2(gx[, 3:ncol(gx)]+1)
 mat <- as.matrix(gx[, 3:ncol(gx)])
 hist(mat)
 ```
-Now it seems to be more normal:
-* The `1.0` data points are all previous `0.0` values
+Now it seems to be more normal.
