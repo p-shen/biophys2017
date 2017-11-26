@@ -1,0 +1,125 @@
+---
+title: "EssentialGeneVariability"
+author: "Peter Shen"
+date: '2017-11-21'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+## Data Import
+
+### RNA Seq Data Processing
+Import the sample data, which was produced taking 1000 lines from the RNASeq data file:
+`head GTEx_Analysis_2016-01-15_v7_RNASeQCv1.1.8_gene_tpm.gct 1000`
+```{r}
+gx <- data.table::fread("sample.csv", sep = "\t", skip=2) # skip headers
+```
+
+Number of samples:
+```{r}
+ncol(gx) - 2 # subtract `name` and `description` fields
+```
+
+Structure of RNA Seq data (sample data):
+* Name = The gene code in Emsembl (eg. http://www.ensembl.org/Homo_sapiens/Gene/Summary?g=ENSG00000223972;r=1:11869-14409)
+* Description = The gene name
+* Then the rest of the columns are tissue sample IDs `SAMPID` and their gene TPM reads
+
+How the sample IDs are mapped to patients:
+* The GTEX-#### is the Subject ID `SUBJID`
+* The rest of the code is for the tissue type
+
+### Phenotype Metadata
+Import the phenotype data that contains the subject phenotypes:
+```{r}
+pheno <- read.csv("GTEx_v7_Annotations_SubjectPhenotypesDS.txt", sep="\t")
+```
+The `SUBJID` maps to the `GTEX-####` in the RNA Seq data file.
+
+### Sample Attributes Metadata
+Import the attributes data:
+```{r}
+attr <- read.csv("GTEx_v7_Annotations_SampleAttributesDS.txt", sep="\t")
+```
+
+Data dictionary of the attributes:
+
+"SMATSSCR"="Autolysis" ("0"="None", "1"="Mild", "2"="Moderate", "3"="Severe")
+"SAMPID"="Sample ID", "SMATSSCR"="Autolysis Score",
+"SMNABTCH"="Nucleic Acid Isolation Batch ID",
+"SMNABTCHT"="Type of nucleic acid isolation batch",
+"SMNABTCHD"="Date of nucleic acid isolation batch",
+"SMGEBTCH"="Genotype or Expression Batch ID",
+"SMGEBTCHD"="Date of genotype or expression batch",
+"SMGEBTCHT"="Type of genotype or expression batch",
+"SMCENTER"="BSS collection site",
+"SMPTHNTS"="Pathology Notes", "SMRIN"="RIN Number",
+"SMTS"="Tissue Type (area of retrieval)",
+"SMTSD"="Tissue Type (detail)", "SMUBRID"="Uberon ID",
+"SMTSISCH"="Total Ischemic time",
+"SMTSPAX"="PAXgene fixative time",
+"SMTSTPTREF"="Period of sample procurement",
+"SMAFRZE"="Samples in GTEx Analysis Freeze",
+"SMGTC"="Genotype GTC file",
+"SME2MPRT"="End 2 Mapping Rate",
+"SMCHMPRS"="Chimeric Pairs",
+"SMNTRART"="Intragenic Rate",
+"SMNUMGPS"="Number of Gaps", "SMMAPRT"="Mapping Rate",
+"SMEXNCRT"="Exonic Rate",
+"SM550NRM"="5' 50-based normalization",
+"SMGNSDTC"="Genes Detected",
+"SMUNMPRT"="Unique Rate of Mapped",
+"SM350NRM"="3' 50-base normalization",
+"SMRDLGTH"="Read Length",
+"SMMNCPB"="Mean Coverage Per Base",
+"SME1MMRT"="End 1 Mismatch Rate",
+"SMSFLGTH"="Fragment Length StdDev",
+"SMESTLBS"="Estimated library size",
+"SMMPPD"="Total mapped reads",
+"SMNTERRT"="Intergenic Rate",
+"SMRRNANM"="rRNA reads", "SMRDTTL"="Total reads",
+"SMVQCFL"="Failed Vendor QC Check",
+"SMMNCV"="Mean coefficient of variation",
+"SMTRSCPT"="Transcripts Detected",
+"SMMPPDPR"="Mapped Pairs",
+"SMCGLGTH"="Cumulative Gap Length",
+"SMGAPPCT"="Gap Percentage",
+"SMUNPDRD"="Unpaired Reads", "SMNTRNRT"="Intronic Rate",
+"SMMPUNRT"="Mapped Unique Rate of Total",
+"SMEXPEFF"="Expression Profiling Efficiency",
+"SMMPPDUN"="Mapped Unique",
+"SME2MMRT"="End 2 Mismatch Rate",
+"SME2ANTI"="End 2 Antisense",
+"SMALTALG"="Alternative Aligments",
+"SME2SNSE"="End 2 Sense",
+"SMMFLGTH"="Fragment Length Mean",
+"SMSPLTRD"="Split Reads", "SME1ANTI"="End 1 Antisense",
+"SMBSMMRT"="Base Mismatch Rate",
+"SME1SNSE"="End 1 Sense",
+"SME1PCTS"="End 1 % Sense", "SMRRNART"="rRNA Rate",
+"SME1MPRT"="End 1 Mapping Rate",
+"SMNUM5CD"="Number Covered 5'",
+"SMDPMPRT"="Duplication Rate of Mapped",
+"SME2PCTS"="End 2 % Sense"
+
+Source: https://github.com/nuno-agostinho/psichomics/blob/master/R/formats_gtexSampleInfo.R
+
+## Preprocessing
+```{r}
+mat <- as.matrix(gx[, 3:ncol(gx)])
+hist(mat)
+```
+
+We need to pull these data points closer together with log:
+```{r}
+gx[, 3:ncol(gx)] <- log2(gx[, 3:ncol(gx)]+1)
+
+# look at the data again
+mat <- as.matrix(gx[, 3:ncol(gx)])
+hist(mat)
+```
+Now it seems to be more normal.
