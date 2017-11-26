@@ -16,7 +16,7 @@ library(tidyverse)
 Import the sample data, which was produced taking 1000 lines from the RNASeq data file:
 `head GTEx_Analysis_2016-01-15_v7_RNASeQCv1.1.8_gene_tpm.gct 1000`
 ```{r}
-gx <- read.csv("sample.csv", sep = "\t", skip=2) # skip headers
+gx <- data.table::fread("sample.csv", sep = "\t", skip=2) # skip headers
 ```
 
 Number of samples:
