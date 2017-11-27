@@ -123,17 +123,3 @@ mat <- as.matrix(gx[, 3:ncol(gx)])
 hist(mat)
 ```
 Now it seems to be more normal.
-
-```{r}
-gx.tissue <- as.data.frame(t(gx[,3:ncol(gx)]))
-colnames(gx.tissue) <- gx$Description
-gx.tissue$SAMPID<- names(gx)[3:ncol(gx)]
-gx.tissue <- attr %>% select(SAMPID,SMTS,SMTSD) %>% right_join(gx.tissue)
-```
-```{r}
-eg <- fread("Biophysics Project/essential_genes.csv",drop = 1)
-neg <- fread("Biophysics Project/nonessential_genes.csv",drop = 1)
-gx.eg.bysite <- gx.tissue %>% group_by(SMTS) %>% select(one_of(eg$x)) 
-gx.neg.bysite <- gx.tissue %>% group_by(SMTS) %>% select(one_of(neg$x))
-
-```
