@@ -205,3 +205,4 @@ posthoc.p_values[which(posthoc.p_values < 0.05 &
                          posthoc.p_values > 0)]
 ```
 The resulting pairs has p_value less than 0.05, meaning the differences between them are significant. 
+
