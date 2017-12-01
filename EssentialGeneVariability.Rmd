@@ -124,15 +124,9 @@ gx[, 3:ncol(gx)] <- log2(gx[, 3:ncol(gx)]+1)
 mat <- as.matrix(gx[, 3:ncol(gx)])
 hist(mat)
 ```
-<<<<<<< HEAD
 Now it seems to be more normal.
 
-
-----------------------------
-Chen Dong
-##ANOVA and POSTHOC analysis
-
-###Preprocess data for ANOVA analysis:
+### Select the essential and non-essential genes from the dataset
 gx_by_gene structure:
 - SAMPID: sample ID
 - SMTS: tissue type
@@ -154,14 +148,29 @@ ess_gene_list <- data.table::fread("essential_genes.csv", drop = 1)$x
 noness_gene_list <- data.table::fread("nonessential_genes.csv", drop = 1)$x
 ```
 
-!!Since we only have 7 gene data, no match on the essential gene list. Modification needed when increasing sample size to match essential and non-essential genes.
+Get the essential and non-essential genes column IDs
 ```{r}
 matched_ess <- match(ess_gene_list, colnames(gx_by_gene))
-# write.table(matched_ess, file="../essential_gene_cols.csv", sep="\t")
+names(matched_ess) <- ess_gene_list
+matched_ess <- matched_ess[!is.na(matched_ess)] # remove NA (no matching genes)
 
 matched_non_ess <- match(noness_gene_list, colnames(gx_by_gene))
-# write.table(matched_non_ess, file="../nonessential_gene_cols.csv", sep="\t")
+names(matched_non_ess) <- noness_gene_list
+matched_non_ess <- matched_non_ess[!is.na(matched_non_ess)] # remove NA (no matching genes)
 ```
+
+Get the expression data for the essential and non-essential genes
+```{r}
+ess_gx <- gx_by_gene[,c(1,2,matched_ess)]
+# write.table(ess_gx, file="../essential_gene_cols.csv", sep="\t")
+
+non_ess_gx <- gx_by_gene[,c(1,2,matched_non_ess)]
+# write.table(non_ess_gx, file="../nonessential_gene_cols.csv", sep="\t")
+```
+
+----------------------------
+Chen Dong
+##ANOVA and POSTHOC analysis
 
 In the following, I pick DDX11L1 as an example.
 ```{r}
@@ -196,6 +205,3 @@ posthoc.p_values[which(posthoc.p_values < 0.05 &
                          posthoc.p_values > 0)]
 ```
 The resulting pairs has p_value less than 0.05, meaning the differences between them are significant. 
-=======
-Now it seems to be more normal.
->>>>>>> master
