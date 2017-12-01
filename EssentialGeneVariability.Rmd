@@ -140,7 +140,11 @@ gx_by_gene structure:
 gx_by_gene <- as.data.frame(t(gx[,3:ncol(gx)])) # select only expression data and transpose
 colnames(gx_by_gene) <- gx$Description # gene names on columns
 gx_by_gene$SAMPID<- names(gx)[3:ncol(gx)] # add another column for sample ID
-gx_by_gene <- attr %>% select(SAMPID,SMTS) %>% right_join(gx_by_gene) # select sample ID and tissue type from attr and right join to gx_by_gene by sample ID
+
+# select sample ID and tissue type from attr and right join to gx_by_gene by sample ID
+gx_by_gene <- attr %>%
+    select(`SAMPID`,`SMTS`) %>%
+        right_join(gx_by_gene)
 ```
 
 Read in essential and non-essential gene lists:
@@ -151,7 +155,11 @@ noness_gene_list <- data.table::fread("nonessential_genes.csv", drop = 1)$x
 
 !!Since we only have 7 gene data, no match on the essential gene list. Modification needed when increasing sample size to match essential and non-essential genes.
 ```{r}
-match(colnames(gx_by_gene),ess_gene_list)
+matched_ess <- match(ess_gene_list, colnames(gx_by_gene))
+# write.table(matched_ess, file="../essential_gene_cols.csv", sep="\t")
+
+matched_non_ess <- match(noness_gene_list, colnames(gx_by_gene))
+# write.table(matched_non_ess, file="../nonessential_gene_cols.csv", sep="\t")
 ```
 
 In the following, I pick DDX11L1 as an example.
