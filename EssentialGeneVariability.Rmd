@@ -178,11 +178,12 @@ posthoc <-
   TukeyHSD(x = a1,
            'ess_gene_tissue_exp$SMTS',
            conf.level = 0.95)
-# Get the p_values between each pair of the cell lines
-posthoc.p_values <- posthoc$`ess_gene_tissue_exp$SMTS`[, 4]
+# Get the p_values between each pair of the cell lines and adjusted for multi hypo testing
+posthoc.p_values_adjusted <- posthoc$`ess_gene_tissue_exp$SMTS`[, 4]
+posthoc.p_values_adjusted <- p.adjust(posthoc.p_values,"fdr")
 # Get those less than 0.05 but greater than 0
-posthoc.p_values[which(posthoc.p_values < 0.05 &
-                         posthoc.p_values > 0)]
+posthoc.p_values_adjusted[which(posthoc.p_values_adjusted < 0.05 &
+                         posthoc.p_values_adjusted > 0)]
 ```
 The resulting pairs has p_value less than 0.05, meaning the differences between them are significant. 
 
