@@ -8,6 +8,8 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
+library(dplyr)
+
 ```
 
 ## Data Import
@@ -122,4 +124,65 @@ gx[, 3:ncol(gx)] <- log2(gx[, 3:ncol(gx)]+1)
 mat <- as.matrix(gx[, 3:ncol(gx)])
 hist(mat)
 ```
-Now it seems to be more normal.
+
+----------------------------
+Chen Dong
+##ANOVA and POSTHOC analysis
+
+###Preprocess data for ANOVA analysis:
+gx_by_gene structure:
+- SAMPID: sample ID
+- SMTS: tissue type
+- The rest cols are gene names with gene expressions
+```{r}
+gx_by_gene <- as.data.frame(t(gx[,3:ncol(gx)])) # select only expression data and transpose
+colnames(gx_by_gene) <- gx$Description # gene names on columns
+gx_by_gene$SAMPID<- names(gx)[3:ncol(gx)] # add another column for sample ID
+gx_by_gene <- attr %>% select(SAMPID,SMTS) %>% right_join(gx_by_gene) # select sample ID and tissue type from attr and right join to gx_by_gene by sample ID
+```
+
+Read in essential and non-essential gene lists:
+```{r}
+ess_gene_list <- data.table::fread("essential_genes.csv", drop = 1)$x
+noness_gene_list <- data.table::fread("nonessential_genes.csv", drop = 1)$x
+```
+
+!!Since we only have 7 gene data, no match on the essential gene list. Modification needed when increasing sample size to match essential and non-essential genes.
+```{r}
+match(colnames(gx_by_gene),ess_gene_list)
+```
+
+In the following, I pick DDX11L1 as an example.
+```{r}
+# select one gene with the tissue types and its expressions
+ess_gene_tissue_exp <- gx_by_gene[, c(2, 3)]
+str(ess_gene_tissue_exp)
+```
+
+Hypothesis: The essential genes are equally expressed across all cell lines.
+Alt hypothesis: Essential genes are differentially expressed across cell lines.
+Run ANOVA and assess whether there are differences between tissue type and gene expression in the selected essential gene:
+```{r}
+ess_gene_anova <-
+  lm(ess_gene_tissue_exp$DDX11L1 ~ ess_gene_tissue_exp$SMTS)
+anova(ess_gene_anova)
+```
+Pr(>F) is much smaller than 0.05, meaning we can reject the null of no diff across cell lines.
+
+Then we want to run posthoc to see where the differences lie between the cell lines.
+```{r}
+# Fit an analysis of variance model
+a1 <- aov(ess_gene_tissue_exp$DDX11L1 ~ ess_gene_tissue_exp$SMTS)
+# Compute Tukey Honest Significant Differences
+posthoc <-
+  TukeyHSD(x = a1,
+           'ess_gene_tissue_exp$SMTS',
+           conf.level = 0.95)
+# Get the p_values between each pair of the cell lines
+posthoc.p_values <- posthoc$`ess_gene_tissue_exp$SMTS`[, 4]
+# Get those less than 0.05 but greater than 0
+posthoc.p_values[which(posthoc.p_values < 0.05 &
+                         posthoc.p_values > 0)]
+```
+The resulting pairs has p_value less than 0.05, meaning the differences between them are significant. 
+
