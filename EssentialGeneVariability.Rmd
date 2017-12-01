@@ -168,7 +168,7 @@ non_ess_gx <- gx_by_gene[,c(1,2,matched_non_ess)]
 # write.table(non_ess_gx, file="../nonessential_gene_cols.csv", sep="\t")
 ```
 
-----------------------------
+
 Chen Dong
 ##ANOVA and POSTHOC analysis
 
