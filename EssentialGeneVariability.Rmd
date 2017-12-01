@@ -124,8 +124,6 @@ gx[, 3:ncol(gx)] <- log2(gx[, 3:ncol(gx)]+1)
 mat <- as.matrix(gx[, 3:ncol(gx)])
 hist(mat)
 ```
-Now it seems to be more normal.
-
 
 ----------------------------
 Chen Dong
@@ -187,3 +185,4 @@ posthoc.p_values[which(posthoc.p_values < 0.05 &
                          posthoc.p_values > 0)]
 ```
 The resulting pairs has p_value less than 0.05, meaning the differences between them are significant. 
+
