@@ -16,11 +16,28 @@
 #### To submit a job via sbatch for analysis
 `sbatch gene_stat_analysis.sbatch`
 
+##### Managing jobs:
+`$ squeue –u eCommons –t RUNNING/ PENDING`
+`$ squeue –u eCommons –p partition`
+`$ squeue –u eCommons --start`
+
+Detailed job info:
+`$ scontrol show jobid <jobid>``
+
+Cancel jobs:
+$ scancel <jobid>
+$ scancel –t PENDING
+$ scancel --name JOBNAME
+$ scancel jobid_[indices] #array indices
+$ scontrol hold <jobid> #pause pending jobs
+$ scontrol release <jobid> #resume
+$ scontrol requeue <jobid> #cancel and rerun
+
 ### To version your own R packages on O2
 https://wiki.rc.hms.harvard.edu/display/O2/Personal+R+Packages
 
-mkdir -p ~/R-VersionSelected/library
-echo 'R_LIBS_USER="~/R-VersionSelected/library"' >  $HOME/.Renviron
-export R_LIBS_USER="/home/user123/R-VersionSelected/library"
+`mkdir -p ~/R-VersionSelected/library`
+`echo 'R_LIBS_USER="~/R-VersionSelected/library"' >  $HOME/.Renviron`
+`export R_LIBS_USER="/home/user123/R-VersionSelected/library"`
 
 Then you can do `> R` to enter the interactive console and install any packages.
