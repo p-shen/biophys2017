@@ -1,4 +1,3 @@
-
 #! /bin/bash
 
 # load Rscript modules

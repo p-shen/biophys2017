@@ -9,3 +9,6 @@
 ### To run a Rscript, use:
 
 `Rscript scriptname.R`
+
+### To run the preprocessing in batch mode
+`sbatch -p short -n 4 -t 0-12:00 --mem=32G --job-name preprocessing -o %j.out -e %j.err --wrap="sh slurm.sh"``
