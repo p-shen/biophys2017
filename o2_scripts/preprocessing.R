@@ -1,7 +1,3 @@
-# install packages on O2 environment
-install.packages("dplyr")
-install.packages("tidyverse")
-
 library(dplyr)
 library(tidyverse)
 
