@@ -29,7 +29,7 @@ matched_non_ess <- matched_non_ess[!is.na(matched_non_ess)] # remove NA (no matc
 
 # Get the expression data for the essential and non-essential genes and write out
 ess_gx <- gx_by_gene[,c(1,2,matched_ess)]
-write.table(ess_gx, file="../essential_gene_cols.csv", sep="\t")
+write.table(ess_gx, file="../expdata_essential_gene.csv", sep="\t")
 
 non_ess_gx <- gx_by_gene[,c(1,2,matched_non_ess)]
-write.table(non_ess_gx, file="../nonessential_gene_cols.csv", sep="\t")
+write.table(non_ess_gx, file="../expdata_nonessential_gene_data.csv", sep="\t")
