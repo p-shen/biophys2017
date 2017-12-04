@@ -48,7 +48,7 @@ ess_posthoc.p_values_df <- as.data.frame(do.call(rbind, ess_posthoc.p_values))
 # - has zeros
 
 # write into csv file
-write.table(ess_posthoc.p_values_df, file="../essential_gene_posthoc_pvalues.csv", sep="\t")
+write.table(ess_posthoc.p_values_df, file="../essential_gene_posthoc_pvalues.csv")
 
 
 ## Analysis on non-essential genes
