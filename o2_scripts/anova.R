@@ -19,7 +19,7 @@ noness_gx[, 3:ncol(noness_gx)] <- log2(noness_gx[, 3:ncol(noness_gx)]+1)
 
 ## Analysis on essential genes
 # Run anova on all essential genes
-#ess_anova_result <- lapply(lapply(ess_gx[,3:ncol(ess_gx)], function(x) lm(x ~ ess_gx$SMTS)), anova)
+ess_anova_result <- lapply(lapply(ess_gx[,3:ncol(ess_gx)], function(x) lm(x ~ ess_gx$SMTS)), anova)
 
 # Fit an analysis of variance model on all essential genes
 a1 <- lapply(ess_gx[,3:ncol(ess_gx)], function(x) aov(x ~ ess_gx$SMTS))
@@ -53,7 +53,7 @@ write.table(ess_posthoc.p_values_df, file="../essential_gene_posthoc_pvalues.csv
 
 ## Analysis on non-essential genes
 # Run anova on all non-essential genes
-#noness_anova_result <- lapply(lapply(noness_gx[,3:ncol(noness_gx)], function(x) lm(x ~ noness_gx$SMTS)), anova)
+noness_anova_result <- lapply(lapply(noness_gx[,3:ncol(noness_gx)], function(x) lm(x ~ noness_gx$SMTS)), anova)
 
 # Fit an analysis of variance model on all non-essential genes
 a2 <- lapply(noness_gx[,3:ncol(noness_gx)], function(x) aov(x ~ noness_gx$SMTS))
