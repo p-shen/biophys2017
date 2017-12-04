@@ -223,13 +223,16 @@ get_pvalue_table <- function(gene,filter.zero = FALSE, normalized = FALSE){
 
   # Whether filter out expression with 0  
   if(filter.zero == TRUE){
-    ess_gene_tissue_exp <- ess_gene_tissue_exp[which(ess_gene_tissue_exp$DDOST!=0),]
+    ess_gene_tissue_exp <- ess_gene_tissue_exp[which(ess_gene_tissue_exp[,gene]!=0),]
   }
   
   # Make all the value lie between 0 - 1
   if(normalized == TRUE){
-    ess_gene_tissue_exp <- ess_gene_tissue_exp %>% group_by(SMTS) %>% mutate(DDOST= normalize(DDOST))
-    ess_gene_tissue_exp <- as.data.frame(ess_gene_tissue_exp)
+    for(tissue in tissue_list){
+      ess_gene_tissue_exp[which(ess_gene_tissue_exp$SMTS==tissue),2] <- normalize(ess_gene_tissue_exp[which(ess_gene_tissue_exp$SMTS==tissue),2])
+    
+    }
+    ess_gene_tissue_exp
   }
   
   # Get pvalue list across all the cell lines
@@ -259,7 +262,7 @@ get_ttest_results <- function(gene){
   ttest_results_normalized <- get_pvalue_table(gene,normalized = TRUE)
 
   # Join all the results in one table
-  ttest_results <- ttest_results %>% left_join(ttest_results_filtered,by='tissue') %>% inner_join(ttest_results_normalized,by='tissue') 
+  ttest_results <- ttest_results %>% left_join(ttest_results_filtered,by='tissue') %>% left_join(ttest_results_normalized,by='tissue') 
   # Rename all column names
   names(ttest_results) <- c("tissue","pvalue","pvalue.filtered","pvalue.normalized")
   ttest_results
@@ -279,7 +282,7 @@ output_ttest_results <- function(gene_list,type){
 
   }
 }
-output_ttest_results("DDOST",type = "essential_gene")
+output_ttest_results("DHDDS",type = "essential_gene")
 #output_ttest_results(names(matched_ess),type = "essential_gene")
 #output_ttest_results(names(matched_non_ess),type = "non_essential_gene")
 
