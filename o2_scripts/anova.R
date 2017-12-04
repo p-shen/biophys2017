@@ -69,4 +69,4 @@ noness_posthoc.p_values <- lapply(noness_posthoc, function(x) x$`noness_gx$SMTS`
 noness_posthoc.p_values_df <- as.data.frame(do.call(rbind, noness_posthoc.p_values))
 
 #  write into csv file
-write.table(noness_posthoc.p_values_df, file="../nonessential_gene_posthoc_pvalues.csv", sep="\t")
+write.table(noness_posthoc.p_values_df, file="../nonessential_gene_posthoc_pvalues.csv")
