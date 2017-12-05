@@ -17,6 +17,15 @@ colnames(noness_gx) <- noness.gx_colname
 ess_gx[, 3:ncol(ess_gx)] <- log2(ess_gx[, 3:ncol(ess_gx)]+1)
 noness_gx[, 3:ncol(noness_gx)] <- log2(noness_gx[, 3:ncol(noness_gx)]+1)
 
+# remove genes that have zero expression
+ess_gx <- as.data.frame(ess_gx)
+ess_gx_nonzero <- ess_gx[, 3:ncol(ess_gx)][apply(ess_gx[, 3:ncol(ess_gx)], 2, function(z) !any(z == 0))]
+ess_gx <- cbind(ess_gx[,1:2],ess_gx_nonzero)
+noness_gx <- as.data.frame(noness_gx)
+noness_gx_nonzero <- noness_gx[, 3:ncol(noness_gx)][apply(noness_gx[, 3:ncol(noness_gx)], 2, function(z) !any(z == 0))]
+noness_gx <- cbind(noness_gx[,1:2],noness_gx_nonzero)
+
+
 ## Analysis on essential genes
 # Run anova on all essential genes
 ess_anova_result <- lapply(lapply(ess_gx[,3:ncol(ess_gx)], function(x) lm(x ~ ess_gx$SMTS)), anova)
