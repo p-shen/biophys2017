@@ -21,9 +21,11 @@ noness_gx[, 3:ncol(noness_gx)] <- log2(noness_gx[, 3:ncol(noness_gx)]+1)
 ess_gx <- as.data.frame(ess_gx)
 ess_gx_nonzero <- ess_gx[, 3:ncol(ess_gx)][apply(ess_gx[, 3:ncol(ess_gx)], 2, function(z) !any(z == 0))]
 ess_gx <- cbind(ess_gx[,1:2],ess_gx_nonzero)
+write.csv(ess_gx, file="../essential_gene_data_nonzero.csv")
 noness_gx <- as.data.frame(noness_gx)
 noness_gx_nonzero <- noness_gx[, 3:ncol(noness_gx)][apply(noness_gx[, 3:ncol(noness_gx)], 2, function(z) !any(z == 0))]
 noness_gx <- cbind(noness_gx[,1:2],noness_gx_nonzero)
+write.csv(noness_gx, file="../nonessential_gene_data_nonzero.csv")
 
 
 ## Analysis on essential genes
