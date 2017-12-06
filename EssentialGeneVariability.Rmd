@@ -227,20 +227,18 @@ normalize <- function(exp){
 
 # The function that perform t-test
 get_pvalue_table <- function(type,filter.zero = FALSE, normalized = FALSE){
-  
-  type <- "non_essential"
-  normalized <- TRUE
-  
+  #normalized = TRUE
+ # type = 'non_essential'
   gene_tissue_exp <- c()
   gene_list <- c()
   
   # Decide the data we use according to type argument
   if(type == "essential"){
     gene_tissue_exp <- ess_gx[,-1]
-    gene_list <- ess_gene_list
+    gene_list <- names(gene_tissue_exp)[-1]
   }else{
     gene_tissue_exp <- non_ess_gx[,-1]
-    gene_list <- noness_gene_list
+    gene_list <- names(gene_tissue_exp)[-1]
   }
   
   # Make all the value lie between 0 - 1 if normalized argument is true
@@ -300,22 +298,22 @@ get_pvalue_table <- function(type,filter.zero = FALSE, normalized = FALSE){
     
     ess_ttest_results <- get_pvalue_table("essential")
     ess_ttest_results_filtered <- get_pvalue_table("essential", filter.zero = TRUE)
-    ess_ttest_results_normalized <- get_pvalue_table("essential", normalized = TRUE)
+    ess_ttest_results_filtered_normalized <- get_pvalue_table("essential", filter.zero = TRUE, normalized = TRUE)
     
     write.csv(ess_ttest_results, file="../ttest_results/essential_ttest_results.csv",row.names = TRUE)
     write.csv(ess_ttest_results_filtered,file="../ttest_results/ess_ttest_results_filtered.csv",row.names = TRUE)
-    write.csv(ess_ttest_results_normalized, file="../ttest_results/essential_ttest_results_normalized.csv",row.names = TRUE)
+    write.csv(ess_ttest_results_filtered_normalized, file="../ttest_results/essential_ttest_results_filtered_normalized.csv",row.names = TRUE)
 ```
 
 Write all of the table
 ```{r}
     non_ess_ttest_results <- get_pvalue_table("non_essential")
     non_ess_ttest_results_filtered <- get_pvalue_table("non_essential", filter.zero = TRUE)
-    non_ess_ttest_results_normalized <- get_pvalue_table("non_essential", normalized = TRUE)
+    non_ess_ttest_results_filtered_normalized <- get_pvalue_table("non_essential", filter.zero = TRUE, normalized = TRUE)
     
     write.csv(non_ess_ttest_results, file="../ttest_results/non_essential_ttest_results.csv",row.names = TRUE)
     write.csv(non_ess_ttest_results_filtered,file="../ttest_results/non_ess_ttest_results_filtered.csv",row.names = TRUE)
-    write.csv(non_ess_ttest_results_normalized, file="../ttest_results/non_essential_ttest_results_normalized.csv",row.names = TRUE)
+    write.csv(non_ess_ttest_results_filtered_normalized, file="../ttest_results/non_essential_ttest_results_filtered_normalized.csv",row.names = TRUE)
 ```
 
 
