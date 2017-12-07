@@ -44,3 +44,16 @@ top_correlated_genes <- unique(unlist(as.list(top_correlated_genes[,1:2])))
 top_correlated_genes
 ```
 
+Hierarchial Clustering
+```{r}
+ed <- dist(gx_by_gene[,3:ncol(gx_by_gene)])
+hclusters_sample <- hclust(ed, method="average")
+ct_sample <- cutree(hclusters_sample, 2)
+```
+
+Hierarchial Clustering Visualized
+```{r}
+pheat <- pheatmap(gx_by_gene[,3:ncol(gx_by_gene)], cutree_col=2)
+```
+
+It looks like the genes we identified that were correlatively expressed were also in the same clusters in the hierarchial clustering... is this robust?
