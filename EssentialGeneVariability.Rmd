@@ -17,7 +17,7 @@ library(dplyr)
 Import the sample data, which was produced taking 1000 lines from the RNASeq data file:
 `head GTEx_Analysis_2016-01-15_v7_RNASeQCv1.1.8_gene_tpm.gct 1000`
 ```{r}
-gx <- data.table::fread("sample.csv", sep = "\t", skip=2) # skip headers
+gx <- data.table::fread("../GTEx_Analysis_2016-01-15_v7_RNASeQCv1.1.8_gene_tpm.gct", sep = "\t", skip=2, nrows = 1000) # skip headers
 ```
 
 Number of samples:
@@ -197,4 +197,119 @@ posthoc.p_values_adjusted[which(posthoc.p_values_adjusted < 0.05 &
                          posthoc.p_values_adjusted > 0)]
 ```
 The resulting pairs has p_value less than 0.05, meaning the differences between them are significant. 
+
+
+## Jimmy - Run t-test for each gene
+
+read the expression data
+```{r}
+ess_gx <- read.csv("expdata_essential_gene.csv",sep='\t')
+non_ess_gx <- read.csv("expdata_nonessential_gene_data.csv", sep = '\t')
+ess_gene_list <- data.table::fread("names_essential_genes.csv", drop = 1)$x
+noness_gene_list <- data.table::fread("names_nonessential_genes.csv", drop = 1)$x
+```
+
+```{r}
+tissue_list <- unique(ess_gx$SMTS)
+
+# normalize method - make all values lie between 0 - 1
+normalize <- function(exp){
+  exp <- (exp - min(exp))/(max(exp) - min(exp))
+  exp
+}
+
+# The function that perform t-test
+get_pvalue_table <- function(type,filter.zero = FALSE, normalized = FALSE){
+  #normalized = TRUE
+ # type = 'non_essential'
+  gene_tissue_exp <- c()
+  gene_list <- c()
+  
+  # Decide the data we use according to type argument
+  if(type == "essential"){
+    gene_tissue_exp <- ess_gx[,-1]
+    gene_list <- names(gene_tissue_exp)[-1]
+  }else{
+    gene_tissue_exp <- non_ess_gx[,-1]
+    gene_list <- names(gene_tissue_exp)[-1]
+  }
+  
+  # Make all the value lie between 0 - 1 if normalized argument is true
+  if(normalized == TRUE){
+    for(tissue in tissue_list){
+        for(gene in gene_list){
+          gene_tissue_exp[which(gene_tissue_exp$SMTS==tissue),gene] <- normalize(gene_tissue_exp[which(gene_tissue_exp$SMTS==tissue),gene])
+        }
+    
+    }
+    gene_tissue_exp
+  }
+  
+  gene_tissue_pvalue_table <- matrix(ncol = length(tissue_list),nrow = 0)
+  # Get pvalue list of all the gene
+  for(gene in gene_list){
+    
+  # for every gene, select one cell line as one group, and the remaining cell lines as another
+    tissue_pvalue_list <- c()
+    for(tissue in tissue_list){
+      target_tissue_gene_exp <- gene_tissue_exp[which(gene_tissue_exp$SMTS==tissue),gene]
+      
+      remaining_tissue_gene_exp <- gene_tissue_exp[which(gene_tissue_exp$SMTS!=tissue),gene]
+     
+      # Filter zero value if filter.zero == TRUE
+      if(filter.zero == TRUE){
+        target_tissue_gene_exp <- target_tissue_gene_exp[which(target_tissue_gene_exp!=0)]
+        remaining_tissue_gene_exp <- remaining_tissue_gene_exp[which(remaining_tissue_gene_exp!=0)]
+      }
+      
+      # Perform t-test of 2 groups
+      pval <- 0
+      if(length(target_tissue_gene_exp) <= 1 | length(remaining_tissue_gene_exp) <= 1){
+        pval <- NA
+      }else{
+        pval <- t.test(target_tissue_gene_exp, remaining_tissue_gene_exp)$p.value
+      }
+      tissue_pvalue_list <- append(tissue_pvalue_list,pval)
+    }
+    
+    gene_tissue_pvalue_table <- rbind(gene_tissue_pvalue_table, tissue_pvalue_list)
+  }
+  
+  # Get the final pvla
+  gene_tissue_pvalue_table <- as.data.frame(gene_tissue_pvalue_table)
+  colnames(gene_tissue_pvalue_table) <- tissue_list
+  rownames(gene_tissue_pvalue_table) <- gene_list
+  
+  gene_tissue_pvalue_table
+
+}
+```
+
+```{r}
+    # Create subfolders first before creating the file
+    dir.create((paste0("../ttest_results/")),showWarnings = FALSE)
+    
+    ess_ttest_results <- get_pvalue_table("essential")
+    ess_ttest_results_filtered <- get_pvalue_table("essential", filter.zero = TRUE)
+    ess_ttest_results_filtered_normalized <- get_pvalue_table("essential", filter.zero = TRUE, normalized = TRUE)
+    
+    write.csv(ess_ttest_results, file="../ttest_results/essential_ttest_results.csv",row.names = TRUE)
+    write.csv(ess_ttest_results_filtered,file="../ttest_results/ess_ttest_results_filtered.csv",row.names = TRUE)
+    write.csv(ess_ttest_results_filtered_normalized, file="../ttest_results/essential_ttest_results_filtered_normalized.csv",row.names = TRUE)
+```
+
+Write all of the table
+```{r}
+    non_ess_ttest_results <- get_pvalue_table("non_essential")
+    non_ess_ttest_results_filtered <- get_pvalue_table("non_essential", filter.zero = TRUE)
+    non_ess_ttest_results_filtered_normalized <- get_pvalue_table("non_essential", filter.zero = TRUE, normalized = TRUE)
+    
+    write.csv(non_ess_ttest_results, file="../ttest_results/non_essential_ttest_results.csv",row.names = TRUE)
+    write.csv(non_ess_ttest_results_filtered,file="../ttest_results/non_ess_ttest_results_filtered.csv",row.names = TRUE)
+    write.csv(non_ess_ttest_results_filtered_normalized, file="../ttest_results/non_essential_ttest_results_filtered_normalized.csv",row.names = TRUE)
+```
+
+
+
+
 
