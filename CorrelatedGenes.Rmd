@@ -1,0 +1,60 @@
+---
+title: "CorrelatedGenes"
+author: "Peter Shen"
+date: '2017-12-07'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(pheatmap)
+```
+
+Preprocessing
+```{r}
+gx <- data.table::fread("sample.csv", skip=2, sep = "\t") # skip headers
+gx <- gx[,2:ncol(gx)]
+gx[, 3:ncol(gx)] <- log2(gx[, 3:ncol(gx)]+1)
+
+gx_by_gene <- as.data.frame(t(gx[,3:ncol(gx)])) # select only expression data and transpose
+colnames(gx_by_gene) <- gx$Description # gene names on columns
+gx_by_gene$SAMPID<- names(gx)[3:ncol(gx)] # add another column for sample ID
+
+attr <- read.csv("GTEx_v7_Annotations_SampleAttributesDS.txt", sep="\t")
+
+# select sample ID and tissue type from attr and right join to gx_by_gene by sample ID
+gx_by_gene <- attr %>%
+    select(`SAMPID`,`SMTS`) %>%
+        right_join(gx_by_gene)
+```
+
+Find the top correlated genes
+```{r}
+percent_top_correlations <- 0.20 # what % of top correlated genes do we want to analyze?
+
+cors <- cor(gx_by_gene[,3:ncol(gx_by_gene)], method="s")
+
+cors[lower.tri(cors,diag=TRUE)] <- NA  #Prepare to drop duplicates and meaningless information
+cors <- as.data.frame(as.table(cors))  #Turn into a 3-column table
+cors <- na.omit(cors)  #Get rid of the junk we flagged above
+cors <- cors[order(-abs(cors$Freq)),]
+
+top_correlated_genes <- cors[1:ceiling(nrow(cors)*percent_top_correlations),]
+top_correlated_genes <- unique(unlist(as.list(top_correlated_genes[,1:2])))
+top_correlated_genes
+```
+
+Hierarchial Clustering
+```{r}
+ed <- dist(gx_by_gene[,3:ncol(gx_by_gene)])
+hclusters_sample <- hclust(ed, method="average")
+ct_sample <- cutree(hclusters_sample, 2)
+```
+
+Hierarchial Clustering Visualized
+```{r}
+pheat <- pheatmap(gx_by_gene[,3:ncol(gx_by_gene)], cutree_col=2)
+```
+
+It looks like the genes we identified that were correlatively expressed were also in the same clusters in the hierarchial clustering... is this robust?
