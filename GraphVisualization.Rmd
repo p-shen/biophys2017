@@ -1,0 +1,72 @@
+---
+title: "Visualization"
+output: html_document
+---
+
+# Read in data file
+```{r}
+ess_gx_nonzero <- data.table::fread("essential_gene_data_nonzero.csv",drop = 1)
+noness_gx_nonzero <- data.table::fread("nonessential_gene_data_nonzero.csv",drop = 1)
+
+```
+
+```{r}
+library(dplyr)
+library(igraph)
+library(ggraph)
+```
+
+# Select how the gene count we need
+```{r}
+essential_gene_count <- 100
+non_essential_gene_count <- 100
+
+# Get top non-essential genes according to "non_essential_gene_count"
+cors <- cor(noness_gx_nonzero[,3:ncol(noness_gx_nonzero)], method="s")
+cors[lower.tri(cors,diag=TRUE)] <- NA  #Prepare to drop duplicates and meaningless information
+cors <- as.data.frame(as.table(cors))  #Turn into a 3-column table
+cors <- na.omit(cors)  #Get rid of the junk we flagged above
+cors <- cors[order(-abs(cors$Freq)),]
+
+top_correlated_genes <- cors[1:ceiling(nrow(cors))*0.05,]
+top_correlated_genes <- unique(unlist(as.list(top_correlated_genes[,1:2])))
+noness_top_correlated_genes <- top_correlated_genes
+
+
+# Get top essential genes according to "non_essential_gene_count"
+cors <- cor(ess_gx_nonzero[,3:ncol(ess_gx_nonzero)], method="s")
+
+cors[lower.tri(cors,diag=TRUE)] <- NA  #Prepare to drop duplicates and meaningless information
+cors <- as.data.frame(as.table(cors))  #Turn into a 3-column table
+cors <- na.omit(cors)  #Get rid of the junk we flagged above
+cors <- cors[order(-abs(cors$Freq)),]
+
+top_correlated_genes <- cors[1:ceiling(nrow(cors))*0.05,]
+top_correlated_genes <- unique(unlist(as.list(top_correlated_genes[,1:2])))
+ess_top_correlated_genes <- top_correlated_genes
+
+top_correlated_genes <- c(as.character(ess_top_correlated_genes), as.character(noness_top_correlated_genes))
+```
+
+```{r}
+gx_nonzero <- cbind(ess_gx_nonzero[,-c(1,2)],noness_gx_nonzero[,-c(1,2)])
+top_gx_nonzero <- gx_nonzero %>% select(top_correlated_genes)
+geneDistances <- 1- abs(cor(top_gx_nonzero,method = "spearman"))
+```
+
+```{r}
+gene_graph <- graph_from_adjacency_matrix(geneDistances,mode = "undirected", diag = FALSE, weighted = TRUE)
+simple_graph <- delete.edges(gene_graph,which(E(gene_graph)$weight > 0.2))
+#simple_graph <- delete.vertices(simple_graph, which(degree(simple_graph)==0))
+
+Distance = E(simple_graph)$weight
+Node_Degree = ifelse(degree(simple_graph)<=10, "<=10", ">10" ) 
+Type = ifelse(V(simple_graph)$name %in% names(ess_gx_nonzero),"essential","non-essential")
+
+ggraph(simple_graph, layout="kk") +
+  geom_edge_link(mapping=aes(color=Distance)) +
+  scale_edge_color_gradient(low="red", high="yellow") +
+ # geom_node_text(mapping=aes(label=name,family='Courier',fontface ='bold'),repel=T) +
+  geom_node_point(mapping=aes(color=Type)) + 
+  theme_void()
+```
