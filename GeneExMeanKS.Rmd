@@ -1,0 +1,71 @@
+---
+title: "ess_gene_mean"
+author: "Chen Dong"
+date: "12/10/2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+## Preprocess
+# Read in essential and non-essential gene expression data
+ess_gx <- data.table::fread("./expdata_essential_gene.csv", fill = T)
+ess.gx_colname <- colnames(ess_gx)[-length(colnames(ess_gx))]
+ess_gx <- ess_gx[,-1]
+colnames(ess_gx) <- ess.gx_colname
+
+noness_gx <- data.table::fread("./expdata_nonessential_gene_data.csv", fill = T)
+noness.gx_colname <- colnames(noness_gx)[-length(colnames(noness_gx))]
+noness_gx <- noness_gx[,-1]
+colnames(noness_gx) <- noness.gx_colname
+
+# log transforma the expression data
+ess_gx[, 3:ncol(ess_gx)] <- log2(ess_gx[, 3:ncol(ess_gx)]+1)
+noness_gx[, 3:ncol(noness_gx)] <- log2(noness_gx[, 3:ncol(noness_gx)]+1)
+
+# remove genes that have zero expression
+ess_gx <- as.data.frame(ess_gx)
+ess_gx_nonzero <- ess_gx[, 3:ncol(ess_gx)][apply(ess_gx[, 3:ncol(ess_gx)], 2, function(z) !any(z == 0))]
+ess_gx <- cbind(SMTS=ess_gx$SMTS,ess_gx_nonzero)
+noness_gx <- as.data.frame(noness_gx)
+noness_gx_nonzero <- noness_gx[, 3:ncol(noness_gx)][apply(noness_gx[, 3:ncol(noness_gx)], 2, function(z) !any(z == 0))]
+noness_gx <- cbind(SMTS=noness_gx$SMTS,noness_gx_nonzero)
+```
+
+
+```{r}
+# calculate the gene expression mean for each gene in each tissue
+x <- apply(ess_gx[, 2:ncol(ess_gx)],2,function(x) aggregate(x ~ SMTS, data = ess_gx, FUN= "mean" ))
+tissue <- x$AAMP$SMTS
+# process the data
+y <- as.data.frame(lapply(x,function(a) a$x)) 
+ess_gx_mean <- cbind(tissue,y)
+str(ess_gx_mean)
+```
+
+# Structure of the ess_gx_mean
+- 30x547
+- first col is the tissue types as factors, 30 types in total
+- rest cols are essential genes with each element in the col as the mean gene exp in a tissue
+- 546 genes in total
+
+```{r}
+# calculate the gene expression mean for each gene in each tissue
+p <- apply(noness_gx[, 2:ncol(noness_gx)],2,function(x) aggregate(x ~ SMTS, data = noness_gx, FUN= "mean" ))
+# process the data
+q <- as.data.frame(lapply(p,function(a) a$x)) 
+noness_gx_mean <- cbind(tissue,q)
+str(noness_gx_mean)
+```
+
+# Structure of the noness_gx_mean
+- 30x138
+- first col is the tissue types as factors, 30 types in total
+- rest cols are nonessential genes with each element in the col as the mean gene exp in a tissue
+- 137 genes in total
+- be aware of the difference in the number of total genes in one tissue if doing KS test
+
+# Please proceed the test below in the same RMD
