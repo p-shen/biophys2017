@@ -69,3 +69,47 @@ str(noness_gx_mean)
 - be aware of the difference in the number of total genes in one tissue if doing KS test
 
 # Please proceed the test below in the same RMD
+
+```{r}
+gx_mean_tissue <- data.frame(type = c(rep("essential",ncol(ess_gx_mean) - 1),rep("non essential",ncol(noness_gx_mean)-1)))
+
+ks_results <- c()
+
+for(t in tissue){
+  ess_distribution <- as.numeric(ess_gx_mean[which(ess_gx_mean$tissue==t),-1])
+  noness_distribution <- as.numeric(noness_gx_mean[which(ess_gx_mean$tissue == t),-1])
+  gx_mean_tissue[,t] <- c(ess_distribution,noness_distribution)
+  
+  pval <- ks.test(ess_distribution, noness_distribution)$p.value
+  ks_results <- append(ks_results, pval)
+}
+
+ks_results <- data.frame(tissue = tissue, ks_results = ks_results)
+```
+# The statistic results of Kolmogorov-Smirnov Tests is stored in ks_results
+- the results is mean expression of essential genes v.s mean expression of non-essential gens in each tissue
+
+
+# Plot the density of essential and non-essential genes
+```{r}
+library(ggplot2)
+library(gridExtra)
+
+parseTissue <- gsub(" ","",tissue)
+colnames(gx_mean_tissue)[-1] <- parseTissue
+
+gglist <- list()
+for(t in parseTissue){
+  gglist[[t]] <- ggplot(gx_mean_tissue, aes_string(x = t)) + geom_density(aes(col = type))
+
+}
+
+#ggplot(gx_mean_tissue, aes(x = Brain)) + geom_density(aes(col = type))
+#do.call("grid.arrange", c(gglist, ncol= 5))
+
+```
+
+# All the plot is stored in gglist, to retrieve the plot of certain tissue, use "gglist$Tissue", for example : 
+```{r}
+gglist$Brain
+```
