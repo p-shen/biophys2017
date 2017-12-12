@@ -16,7 +16,7 @@ gx_by_gene <- attr %>%
         right_join(gx_by_gene)
 
 # ess_gene_list <- data.table::fread("../essential_genes.csv", drop = 1)$x
-noness_gene_list <- data.table::fread("../new_names_nonessential_genes", drop = 1)$x
+noness_gene_list <- data.table::fread("../new_names_nonessential_genes.csv", drop = 1)$x
 
 # Get the essential and non-essential genes column IDs
 #matched_ess <- match(ess_gene_list, colnames(gx_by_gene))
