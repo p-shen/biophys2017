@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #SBATCH -p short   # queue name
-#SBATCH -t 0-24:00       # hours:minutes runlimit after which job will be killed.
+#SBATCH -t 0-20:00       # hours:minutes runlimit after which job will be killed.
 #SBATCH -n 8      # number of cores requested
 #SBATCH --mem=64G # memory requested
 #SBATCH -J essential_genes         # Job name
