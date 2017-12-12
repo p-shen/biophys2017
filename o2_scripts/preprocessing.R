@@ -15,21 +15,21 @@ gx_by_gene <- attr %>%
     select(`SAMPID`,`SMTS`) %>%
         right_join(gx_by_gene)
 
-ess_gene_list <- data.table::fread("../essential_genes.csv", drop = 1)$x
-noness_gene_list <- data.table::fread("../nonessential_genes.csv", drop = 1)$x
+# ess_gene_list <- data.table::fread("../essential_genes.csv", drop = 1)$x
+noness_gene_list <- data.table::fread("../new_names_nonessential_genes", drop = 1)$x
 
 # Get the essential and non-essential genes column IDs
-matched_ess <- match(ess_gene_list, colnames(gx_by_gene))
-names(matched_ess) <- ess_gene_list
-matched_ess <- matched_ess[!is.na(matched_ess)] # remove NA (no matching genes)
+#matched_ess <- match(ess_gene_list, colnames(gx_by_gene))
+#names(matched_ess) <- ess_gene_list
+#matched_ess <- matched_ess[!is.na(matched_ess)] # remove NA (no matching genes)
 
 matched_non_ess <- match(noness_gene_list, colnames(gx_by_gene))
 names(matched_non_ess) <- noness_gene_list
 matched_non_ess <- matched_non_ess[!is.na(matched_non_ess)] # remove NA (no matching genes)
 
 # Get the expression data for the essential and non-essential genes and write out
-ess_gx <- gx_by_gene[,c(1,2,matched_ess)]
-write.table(ess_gx, file="../expdata_essential_gene.csv", sep="\t")
+#ess_gx <- gx_by_gene[,c(1,2,matched_ess)]
+#write.table(ess_gx, file="../expdata_essential_gene.csv", sep="\t")
 
 non_ess_gx <- gx_by_gene[,c(1,2,matched_non_ess)]
 write.table(non_ess_gx, file="../expdata_nonessential_gene_data.csv", sep="\t")
