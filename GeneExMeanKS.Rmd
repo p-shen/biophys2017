@@ -113,3 +113,74 @@ for(t in parseTissue){
 ```{r}
 gglist$Brain
 ```
+
+
+# Sample qqplot
+# take the first two tissues: Adipose Tissue and Adrenal Gland
+# plot density aside with qqplot
+# essential on the top half and nonessential on bottom half
+```{r}
+layout(matrix(1:4, 2, 2, byrow = TRUE))
+
+for(t in tissue[1:2]){
+  ess_distribution <- as.numeric(ess_gx_mean[which(ess_gx_mean$tissue==t),-1])
+  noness_distribution <- as.numeric(noness_gx_mean[which(ess_gx_mean$tissue == t),-1])
+  
+  plot(density(ess_distribution))
+  qqnorm(ess_distribution);qqline(ess_distribution, col = 2)
+  plot(density(noness_distribution))
+  qqnorm(noness_distribution);qqline(noness_distribution, col = 2)
+}
+
+```
+
+
+# trying Shapiro-Wilk Normality Test
+```{r}
+# Using Jimmy's code and modified.
+
+# pval smaller than 0.05 would be not normally distributed.
+
+sw_results.ess <- c()
+sw_results.noness <- c()
+
+for(t in tissue){
+  ess_distribution <- as.numeric(ess_gx_mean[which(ess_gx_mean$tissue==t),-1])
+  noness_distribution <- as.numeric(noness_gx_mean[which(ess_gx_mean$tissue == t),-1])
+
+  pval.ess <- shapiro.test(ess_distribution)$p.value
+  pval.noness <- shapiro.test(noness_distribution)$p.value
+
+  sw_results.ess <- append(sw_results.ess, pval.ess)
+  sw_results.noness <- append(sw_results.noness, pval.noness)
+}
+
+sw_results <- data.frame(tissue = tissue, sw_results_pval.ess = sw_results.ess, sw_results_pval.noness = sw_results.noness)
+
+```
+
+
+# trying f test
+```{r}
+# Using Jimmy's code and modified.
+
+# We want to get the result that ess shows less variance than noness.
+
+# First we do f test hypothesising the null that noness shows less or eqaul variance than ess;
+# for those pval smaller than 0.05, we can reject the null and conclude that noness either shows greater variance than ess.
+
+f_results.less <- c()
+
+for(t in tissue){
+  ess_distribution <- as.numeric(ess_gx_mean[which(ess_gx_mean$tissue==t),-1])
+  noness_distribution <- as.numeric(noness_gx_mean[which(ess_gx_mean$tissue == t),-1])
+
+  pval.less <- var.test(noness_distribution, ess_distribution, alternative = "less")$p.value
+  f_results.less <- append(f_results.less, pval.less)
+}
+
+f_results <- data.frame(tissue = tissue, f_results_pval.less = f_results.less)
+
+f_results[which(f_results$f_results_pval.less<0.05),]
+```
+# Total of 19 tissues of ess genes show significantly less vairance than noness genes in those tissue.
