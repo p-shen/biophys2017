@@ -184,3 +184,45 @@ f_results <- data.frame(tissue = tissue, f_results_pval.less = f_results.less)
 f_results[which(f_results$f_results_pval.less<0.05),]
 ```
 # Total of 19 tissues of ess genes show significantly less vairance than noness genes in those tissue.
+
+
+
+# Select the gene 
+```{r}
+# Randomly choose 3 from essential genes and non-essential genes
+ess_gene_list <- sample(names(ess_gx[-1]),3)
+noness_gene_list <-sample(names(noness_gx[-1]),3)
+
+# Specifiy the tissue we want. If tissue == "All Tissue", meaning don't choose at all, using all the samples
+tissue <- "All Tissue"
+
+if(tissue != 'All Tissue'){
+  ess_gx_tissue <- ess_gx %>% filter(SMTS == tissue) %>% select(ess_gene_list)
+  noness_gx_tissue <- noness_gx %>% filter(SMTS == tissue) %>% select(noness_gene_list)  
+}else{
+  ess_gx_tissue <- ess_gx %>% select(ess_gene_list)
+  noness_gx_tissue <- noness_gx %>% select(noness_gene_list)
+}
+
+
+gx_tissue <- cbind(ess_gx_tissue, noness_gx_tissue)
+
+gx_tissue_forplot <- gx_tissue %>% gather(gene, expression)
+gx_tissue_forplot$type <- ifelse(gx_tissue_forplot$gene %in% ess_gene_list, "essential","non-essential")
+gx_tissue_forplot$gene <- factor(gx_tissue_forplot$gene, levels = c(ess_gene_list, noness_gene_list))
+ggplot(gx_tissue_forplot, aes(x = gene, y = expression, fill = type)) + geom_boxplot() + ggtitle(tissue)
+```
+
+# Plot the standard deviation of each gene
+```{r}
+gx_var <- gx_tissue_forplot %>% group_by(gene) %>% summarise(var = sd(expression)) 
+gx_var$type <-  ifelse(gx_var$gene %in% ess_gene_list, "essential","non-essential")
+ggplot(gx_var, aes(x = gene, y = var, fill = type)) + geom_bar(stat= 'identity') + ggtitle(tissue)
+```
+
+# Plot the variation of each gene devided by mean
+```{r}
+gx_varbymean <- gx_tissue_forplot %>% group_by(gene) %>% summarise(var_bymean = sd(expression)/mean(expression)) 
+gx_varbymean$type <-  ifelse(gx_varbymean$gene %in% ess_gene_list, "essential","non-essential")
+ggplot(gx_varbymean, aes(x = gene, y = var_bymean, fill = type)) + geom_bar(stat= 'identity') + ggtitle(tissue)
+```
