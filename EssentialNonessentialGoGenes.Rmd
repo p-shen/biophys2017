@@ -35,6 +35,6 @@ non_ess_genes_in_go <- intersect(noness_gene_list, go_genes$GeneName)
 Take the samples essential genes list
 ```{r}
 set.seed(3)
-sample(ess_genes_in_go, length(non_ess_genes_in_go))
+sample_ess_genes <- sample(ess_genes_in_go, length(non_ess_genes_in_go))
 ```
 
