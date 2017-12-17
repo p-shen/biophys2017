@@ -12,6 +12,7 @@ library(tidyverse)
 
 GO analysis file import
 This GO analysis is just for the RNA processing pathway
+Source: http://www.informatics.jax.org/go/term/GO:0006396
 ```{r}
 go_genes <- read.csv("RNA_processing_genes_GO_ 0006396.csv")
 go_genes$GeneName <- toupper(go_genes$Symbol)
