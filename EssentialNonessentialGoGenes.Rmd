@@ -1,0 +1,40 @@
+---
+title: "EssentialNonessentialGOGenes"
+author: "Peter Shen"
+date: '2017-12-16'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+GO analysis file import
+This GO analysis is just for the RNA processing pathway
+```{r}
+go_genes <- read.csv("RNA_processing_genes_GO_ 0006396.csv")
+go_genes$GeneName <- toupper(go_genes$Symbol)
+```
+
+Read in essential and non-essential gene lists:
+```{r}
+ess_gene_list <- data.table::fread("names_essential_genes.csv", drop = 1)$x
+noness_gene_list <- data.table::fread("names_nonessential_genes.csv", drop = 1)$x
+```
+
+Match the genes from GO analysis to essential and non-essential genes
+```{r}
+ess_genes_in_go <- intersect(ess_gene_list, go_genes$GeneName)
+```
+
+```{r}
+non_ess_genes_in_go <- intersect(noness_gene_list, go_genes$GeneName)
+```
+
+Take the samples essential genes list
+```{r}
+set.seed(3)
+sample(ess_genes_in_go, length(non_ess_genes_in_go))
+```
+
