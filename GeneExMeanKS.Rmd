@@ -190,8 +190,8 @@ f_results[which(f_results$f_results_pval.less<0.05),]
 # Select the gene 
 ```{r}
 # Randomly choose 3 from essential genes and non-essential genes
-ess_gene_list <- sample(names(ess_gx[-1]),3)
-noness_gene_list <-sample(names(noness_gx[-1]),3)
+ess_gene_list <- c("DHX33","METTL16","IKBKAP")
+noness_gene_list <-c("DHX32","KHDRBS1","TRMT2B")
 
 # Specifiy the tissue we want. If tissue == "All Tissue", meaning don't choose at all, using all the samples
 tissue <- "All Tissue"
@@ -210,7 +210,7 @@ gx_tissue <- cbind(ess_gx_tissue, noness_gx_tissue)
 gx_tissue_forplot <- gx_tissue %>% gather(gene, expression)
 gx_tissue_forplot$type <- ifelse(gx_tissue_forplot$gene %in% ess_gene_list, "essential","non-essential")
 gx_tissue_forplot$gene <- factor(gx_tissue_forplot$gene, levels = c(ess_gene_list, noness_gene_list))
-ggplot(gx_tissue_forplot, aes(x = gene, y = expression, fill = type)) + geom_boxplot() + ggtitle(tissue)
+#ggplot(gx_tissue_forplot, aes(x = gene, y = expression, fill = type)) + geom_boxplot() + ggtitle(tissue)
 ```
 
 # Plot the standard deviation of each gene
@@ -220,9 +220,36 @@ gx_var$type <-  ifelse(gx_var$gene %in% ess_gene_list, "essential","non-essentia
 ggplot(gx_var, aes(x = gene, y = var, fill = type)) + geom_bar(stat= 'identity') + ggtitle(tissue)
 ```
 
-# Plot the variation of each gene devided by mean
+# Calculate by individual
 ```{r}
-gx_varbymean <- gx_tissue_forplot %>% group_by(gene) %>% summarise(var_bymean = sd(expression)/mean(expression)) 
-gx_varbymean$type <-  ifelse(gx_varbymean$gene %in% ess_gene_list, "essential","non-essential")
-ggplot(gx_varbymean, aes(x = gene, y = var_bymean, fill = type)) + geom_bar(stat= 'identity') + ggtitle(tissue)
+
+
+ess_var <- ess_gx[,-1] %>% summarise_all(var)
+noness_var <- noness_gx[,-1] %>% summarise_all(var)
+
+ess_var <- as.numeric(ess_var[1,])
+noness_var <- as.numeric(noness_var[1,])
+
+varbarplot_df <- data.frame(var = c(ess_var,noness_var), type = c(rep("essential",length(ess_var)), rep('non-essential',length(noness_var))))
+
+ggplot(varbarplot_df, aes(x = type, y = var, fill = type)) + geom_boxplot() + ylab("variation of gene expression") + xlab("gene type") + theme_minimal() + ggtitle("Variation across all individuals")
+
+t.test(ess_var,noness_var)
+```
+# Calcualate by tissue
+```{r}
+ess_var <- ess_gx %>% group_by(SMTS) %>% summarise_all(mean) 
+ess_var <- ess_var[,-1] %>% summarise_all(var)
+ess_var <- as.numeric(ess_var[1,])
+
+noness_var <- noness_gx %>% group_by(SMTS) %>% summarise_all(mean)
+noness_var <- noness_var[,-1] %>% summarise_all(var)
+noness_var <- as.numeric(noness_var[1,])
+
+varbarplot_df <- data.frame(var = c(ess_var,noness_var), type = c(rep("essential",length(ess_var)), rep('non-essential',length(noness_var))))
+
+ggplot(varbarplot_df, aes(x = type, y = var, fill = type)) + geom_boxplot() + ylab("variation of gene expression") + xlab("gene type") + theme_minimal() + ggtitle("Variation across all Tissues")
+
+
+t.test(ess_var,noness_var)
 ```
