@@ -12,10 +12,11 @@ library(tidyverse)
 
 GO analysis file import
 This GO analysis is just for the RNA processing pathway
-Source: http://www.informatics.jax.org/go/term/GO:0006396
+Source: http://amigo.geneontology.org/amigo/term/GO:0016070
 ```{r}
-go_genes <- read.csv("RNA_processing_genes_GO_ 0006396.csv")
-go_genes$GeneName <- toupper(go_genes$Symbol)
+go_genes <- read.delim("homo_sapien_genes.txt")
+colnames(go_genes) <- c("UniProt", "Annotation", "GeneName")
+go_genes$GeneName <- toupper(go_genes$GeneName)
 ```
 
 Read in essential and non-essential gene lists:
