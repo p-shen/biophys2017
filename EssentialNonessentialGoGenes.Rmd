@@ -35,7 +35,37 @@ non_ess_genes_in_go <- intersect(noness_gene_list, go_genes$GeneName)
 
 Take the samples essential genes list
 ```{r}
-set.seed(3)
-sample_ess_genes <- sample(ess_genes_in_go, length(non_ess_genes_in_go))
+sample_ess_genes <- sample(ess_genes_in_go, 3)
 ```
 
+# Select the gene 
+```{r}
+# Randomly choose 3 from essential genes and non-essential genes
+ess_gene_list <- sample_ess_genes
+noness_gene_list <-c("DHX32","KHDRBS1","TRMT2B")
+
+# Specifiy the tissue we want. If tissue == "All Tissue", meaning don't choose at all, using all the samples
+tissue <- "All Tissue"
+
+if(tissue != 'All Tissue'){
+  ess_gx_tissue <- ess_gx %>% filter(SMTS == tissue) %>% select(ess_gene_list)
+  noness_gx_tissue <- noness_gx %>% filter(SMTS == tissue) %>% select(noness_gene_list)  
+}else{
+  ess_gx_tissue <- ess_gx %>% select(ess_gene_list)
+  noness_gx_tissue <- noness_gx %>% select(noness_gene_list)
+}
+
+
+gx_tissue <- cbind(ess_gx_tissue, noness_gx_tissue)
+
+gx_tissue_forplot <- gx_tissue %>% gather(gene, expression)
+gx_tissue_forplot$type <- ifelse(gx_tissue_forplot$gene %in% ess_gene_list, "essential","non-essential")
+gx_tissue_forplot$gene <- factor(gx_tissue_forplot$gene, levels = c(ess_gene_list, noness_gene_list))
+ggplot(gx_tissue_forplot, aes(x = gene, y = expression, fill = type)) + geom_boxplot() + ggtitle(tissue)
+```
+```{r}
+gx_var <- gx_tissue_forplot %>% group_by(gene) %>% summarise(var = var(expression))
+gx_var$type <-  ifelse(gx_var$gene %in% ess_gene_list, "essential","non-essential")
+ggplot(gx_var, aes(x = gene, y = var, fill = type)) + geom_bar(stat= 'identity') + ggtitle(tissue)
+
+```
