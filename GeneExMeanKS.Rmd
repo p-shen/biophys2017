@@ -190,8 +190,8 @@ f_results[which(f_results$f_results_pval.less<0.05),]
 # Select the gene 
 ```{r}
 # Randomly choose 3 from essential genes and non-essential genes
-ess_gene_list <- c("DHX33","METTL16","IKBKAP")
-noness_gene_list <-c("DHX32","KHDRBS1","TRMT2B")
+ess_gene_list <- sample_ess_genes
+noness_gene_list <-non_ess_genes_in_go
 
 # Specifiy the tissue we want. If tissue == "All Tissue", meaning don't choose at all, using all the samples
 tissue <- "All Tissue"
@@ -215,14 +215,26 @@ gx_tissue_forplot$gene <- factor(gx_tissue_forplot$gene, levels = c(ess_gene_lis
 
 # Plot the standard deviation of each gene
 ```{r}
-gx_var <- gx_tissue_forplot %>% group_by(gene) %>% summarise(var = sd(expression)) 
+gx_var <- gx_tissue_forplot %>% group_by(gene) %>% summarise(var = var(expression)) 
 gx_var$type <-  ifelse(gx_var$gene %in% ess_gene_list, "essential","non-essential")
-ggplot(gx_var, aes(x = gene, y = var, fill = type)) + geom_bar(stat= 'identity') + ggtitle(tissue)
+ggplot(gx_var, aes(x = gene, y = var, fill = type)) + geom_bar(stat= 'identity') + ggtitle("Genes in RNA Metabolic Process Pathway") + theme(axis.text.x=element_text(angle=90, hjust=1,size = 6)) + ylab("Variation")
+
+
+ess_var <- gx_var[gx_var$type=="essential",]$var
+noness_var <- gx_var[gx_var$type=="non-essential",]$var
+
+varbarplot_df <- data.frame(var = c(ess_var,noness_var), type = c(rep("essential",length(ess_var)), rep('non-essential',length(noness_var))))
+
+ggplot(varbarplot_df, aes(x = type, y = var, fill = type)) + geom_boxplot() + ylab("variation of gene expression") + xlab("gene type") + theme_minimal() + ggtitle("Variation across all individuals")
+
+t.test(ess_var,noness_var)
+
+
 ```
+
 
 # Calculate by individual
 ```{r}
-
 
 ess_var <- ess_gx[,-1] %>% summarise_all(var)
 noness_var <- noness_gx[,-1] %>% summarise_all(var)
@@ -252,4 +264,8 @@ ggplot(varbarplot_df, aes(x = type, y = var, fill = type)) + geom_boxplot() + yl
 
 
 t.test(ess_var,noness_var)
+```
+
+```{r}
+corrplot(cor(vio_city,use = 'complete.obs'),type = "lower",diag = FALSE)
 ```
