@@ -69,3 +69,203 @@ str(noness_gx_mean)
 - be aware of the difference in the number of total genes in one tissue if doing KS test
 
 # Please proceed the test below in the same RMD
+
+```{r}
+gx_mean_tissue <- data.frame(type = c(rep("essential",ncol(ess_gx_mean) - 1),rep("non essential",ncol(noness_gx_mean)-1)))
+
+ks_results <- c()
+
+for(t in tissue){
+  ess_distribution <- as.numeric(ess_gx_mean[which(ess_gx_mean$tissue==t),-1])
+  noness_distribution <- as.numeric(noness_gx_mean[which(ess_gx_mean$tissue == t),-1])
+  gx_mean_tissue[,t] <- c(ess_distribution,noness_distribution)
+  
+  pval <- ks.test(ess_distribution, noness_distribution)$p.value
+  ks_results <- append(ks_results, pval)
+}
+
+ks_results <- data.frame(tissue = tissue, ks_results = ks_results)
+```
+# The statistic results of Kolmogorov-Smirnov Tests is stored in ks_results
+- the results is mean expression of essential genes v.s mean expression of non-essential gens in each tissue
+
+
+# Plot the density of essential and non-essential genes
+```{r}
+library(ggplot2)
+library(gridExtra)
+
+parseTissue <- gsub(" ","",tissue)
+colnames(gx_mean_tissue)[-1] <- parseTissue
+
+gglist <- list()
+for(t in parseTissue){
+  gglist[[t]] <- ggplot(gx_mean_tissue, aes_string(x = t)) + geom_density(aes(col = type))
+
+}
+
+#ggplot(gx_mean_tissue, aes(x = Brain)) + geom_density(aes(col = type))
+#do.call("grid.arrange", c(gglist, ncol= 5))
+
+```
+
+# All the plot is stored in gglist, to retrieve the plot of certain tissue, use "gglist$Tissue", for example : 
+```{r}
+gglist$Brain
+```
+
+
+# Sample qqplot
+# take the first two tissues: Adipose Tissue and Adrenal Gland
+# plot density aside with qqplot
+# essential on the top half and nonessential on bottom half
+```{r}
+layout(matrix(1:4, 2, 2, byrow = TRUE))
+
+for(t in tissue[1:2]){
+  ess_distribution <- as.numeric(ess_gx_mean[which(ess_gx_mean$tissue==t),-1])
+  noness_distribution <- as.numeric(noness_gx_mean[which(ess_gx_mean$tissue == t),-1])
+  
+  plot(density(ess_distribution))
+  qqnorm(ess_distribution);qqline(ess_distribution, col = 2)
+  plot(density(noness_distribution))
+  qqnorm(noness_distribution);qqline(noness_distribution, col = 2)
+}
+
+```
+
+
+# trying Shapiro-Wilk Normality Test
+```{r}
+# Using Jimmy's code and modified.
+
+# pval smaller than 0.05 would be not normally distributed.
+
+sw_results.ess <- c()
+sw_results.noness <- c()
+
+for(t in tissue){
+  ess_distribution <- as.numeric(ess_gx_mean[which(ess_gx_mean$tissue==t),-1])
+  noness_distribution <- as.numeric(noness_gx_mean[which(ess_gx_mean$tissue == t),-1])
+
+  pval.ess <- shapiro.test(ess_distribution)$p.value
+  pval.noness <- shapiro.test(noness_distribution)$p.value
+
+  sw_results.ess <- append(sw_results.ess, pval.ess)
+  sw_results.noness <- append(sw_results.noness, pval.noness)
+}
+
+sw_results <- data.frame(tissue = tissue, sw_results_pval.ess = sw_results.ess, sw_results_pval.noness = sw_results.noness)
+
+```
+
+
+# trying f test
+```{r}
+# Using Jimmy's code and modified.
+
+# We want to get the result that ess shows less variance than noness.
+
+# First we do f test hypothesising the null that noness shows less or eqaul variance than ess;
+# for those pval smaller than 0.05, we can reject the null and conclude that noness either shows greater variance than ess.
+
+f_results.less <- c()
+
+for(t in tissue){
+  ess_distribution <- as.numeric(ess_gx_mean[which(ess_gx_mean$tissue==t),-1])
+  noness_distribution <- as.numeric(noness_gx_mean[which(ess_gx_mean$tissue == t),-1])
+
+  pval.less <- var.test(noness_distribution, ess_distribution, alternative = "less")$p.value
+  f_results.less <- append(f_results.less, pval.less)
+}
+
+f_results <- data.frame(tissue = tissue, f_results_pval.less = f_results.less)
+
+f_results[which(f_results$f_results_pval.less<0.05),]
+```
+# Total of 19 tissues of ess genes show significantly less vairance than noness genes in those tissue.
+
+
+
+# Select the gene 
+```{r}
+# Randomly choose 3 from essential genes and non-essential genes
+ess_gene_list <- sample_ess_genes
+noness_gene_list <-non_ess_genes_in_go
+
+# Specifiy the tissue we want. If tissue == "All Tissue", meaning don't choose at all, using all the samples
+tissue <- "All Tissue"
+
+if(tissue != 'All Tissue'){
+  ess_gx_tissue <- ess_gx %>% filter(SMTS == tissue) %>% select(ess_gene_list)
+  noness_gx_tissue <- noness_gx %>% filter(SMTS == tissue) %>% select(noness_gene_list)  
+}else{
+  ess_gx_tissue <- ess_gx %>% select(ess_gene_list)
+  noness_gx_tissue <- noness_gx %>% select(noness_gene_list)
+}
+
+
+gx_tissue <- cbind(ess_gx_tissue, noness_gx_tissue)
+
+gx_tissue_forplot <- gx_tissue %>% gather(gene, expression)
+gx_tissue_forplot$type <- ifelse(gx_tissue_forplot$gene %in% ess_gene_list, "essential","non-essential")
+gx_tissue_forplot$gene <- factor(gx_tissue_forplot$gene, levels = c(ess_gene_list, noness_gene_list))
+#ggplot(gx_tissue_forplot, aes(x = gene, y = expression, fill = type)) + geom_boxplot() + ggtitle(tissue)
+```
+
+# Plot the standard deviation of each gene
+```{r}
+gx_var <- gx_tissue_forplot %>% group_by(gene) %>% summarise(var = var(expression)) 
+gx_var$type <-  ifelse(gx_var$gene %in% ess_gene_list, "essential","non-essential")
+ggplot(gx_var, aes(x = gene, y = var, fill = type)) + geom_bar(stat= 'identity') + ggtitle("Genes in RNA Metabolic Process Pathway") + theme(axis.text.x=element_text(angle=90, hjust=1,size = 6)) + ylab("Variation")
+
+
+ess_var <- gx_var[gx_var$type=="essential",]$var
+noness_var <- gx_var[gx_var$type=="non-essential",]$var
+
+varbarplot_df <- data.frame(var = c(ess_var,noness_var), type = c(rep("essential",length(ess_var)), rep('non-essential',length(noness_var))))
+
+ggplot(varbarplot_df, aes(x = type, y = var, fill = type)) + geom_boxplot() + ylab("variation of gene expression") + xlab("gene type") + theme_minimal() + ggtitle("Variation across all individuals")
+
+t.test(ess_var,noness_var)
+
+
+```
+
+
+# Calculate by individual
+```{r}
+
+ess_var <- ess_gx[,-1] %>% summarise_all(var)
+noness_var <- noness_gx[,-1] %>% summarise_all(var)
+
+ess_var <- as.numeric(ess_var[1,])
+noness_var <- as.numeric(noness_var[1,])
+
+varbarplot_df <- data.frame(var = c(ess_var,noness_var), type = c(rep("essential",length(ess_var)), rep('non-essential',length(noness_var))))
+
+ggplot(varbarplot_df, aes(x = type, y = var, fill = type)) + geom_boxplot() + ylab("variation of gene expression") + xlab("gene type") + theme_minimal() + ggtitle("Variation across all individuals")
+
+t.test(ess_var,noness_var)
+```
+# Calcualate by tissue
+```{r}
+ess_var <- ess_gx %>% group_by(SMTS) %>% summarise_all(mean) 
+ess_var <- ess_var[,-1] %>% summarise_all(var)
+ess_var <- as.numeric(ess_var[1,])
+
+noness_var <- noness_gx %>% group_by(SMTS) %>% summarise_all(mean)
+noness_var <- noness_var[,-1] %>% summarise_all(var)
+noness_var <- as.numeric(noness_var[1,])
+
+varbarplot_df <- data.frame(var = c(ess_var,noness_var), type = c(rep("essential",length(ess_var)), rep('non-essential',length(noness_var))))
+
+ggplot(varbarplot_df, aes(x = type, y = var, fill = type)) + geom_boxplot() + ylab("variation of gene expression") + xlab("gene type") + theme_minimal() + ggtitle("Variation across all Tissues")
+
+
+t.test(ess_var,noness_var)
+```
+
+```{r}
+corrplot(cor(vio_city,use = 'complete.obs'),type = "lower",diag = FALSE)
+```
